@@ -4,16 +4,19 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>IPEX Verify — QS Report Verification</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
 --green:#3DE680;--green-dark:#32c96d;--navy-1:#0B1120;--navy-2:#0B1120;
 --card-bg:#1A2332;--sidebar-bg:#0B1120;
 --status-green:#10B981;--status-yellow:#F59E0B;--status-red:#EF4444;
---bg:#0B1120;--bg2:#F5F7FA;--font:-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,Arial,sans-serif;
+--bg:#0B1120;--bg2:#F5F7FA;--font:'Poppins',sans-serif;
 --shadow:0 2px 8px rgba(0,0,0,.3);--radius:12px;
 }
-body{font-family:var(--font);background:var(--bg);color:#fff;min-height:100vh;display:flex}
+body{font-family:var(--font);font-weight:300;background:var(--bg);color:#fff;min-height:100vh;display:flex}
 a{color:var(--green);text-decoration:none}
 button{font-family:var(--font);cursor:pointer;border:none;font-size:.9rem;border-radius:8px;padding:10px 20px;transition:all .2s}
 button:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.15)}
@@ -133,6 +136,23 @@ button:disabled{opacity:.5;cursor:not-allowed;transform:none;box-shadow:none}
 .result-items{margin:16px 0}
 .result-item{display:flex;align-items:center;gap:8px;font-size:.85rem;padding:4px 0}
 
+/* STATS DASHBOARD */
+.stats-dashboard{background:#F8F9FA;border:1px solid #E5E7EB;border-radius:12px;padding:24px;margin-bottom:24px}
+.stats-title{color:#0B1120;font-size:1.1rem;font-weight:600;margin-bottom:16px;text-align:center}
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.stat-card{background:#FFFFFF;border:1px solid #E5E7EB;border-radius:8px;padding:16px;text-align:center;transition:box-shadow .2s}
+.stat-card:hover{box-shadow:0 2px 8px rgba(0,0,0,.1)}
+.stat-card.green{border-left:4px solid var(--status-green)}
+.stat-card.yellow{border-left:4px solid var(--status-yellow)}
+.stat-card.red{border-left:4px solid var(--status-red)}
+.stat-card.grey{border-left:4px solid #6B7280}
+.stat-count{font-size:2rem;font-weight:700;color:#0B1120;margin-bottom:4px}
+.stat-label{font-size:.8rem;color:#6B7280;line-height:1.3}
+.stats-summary{display:flex;justify-content:center;gap:48px;padding-top:16px;border-top:1px solid #E5E7EB}
+.summary-item{text-align:center}
+.summary-label{display:block;font-size:.8rem;color:#6B7280;margin-bottom:4px}
+.summary-value{display:block;font-size:1.2rem;font-weight:600;color:#0B1120}
+
 /* REPORT SELECTION PAGE */
 #report-select-page{display:none}
 .report-select-container{max-width:800px;margin:60px auto;padding:0 24px}
@@ -182,6 +202,7 @@ button:disabled{opacity:.5;cursor:not-allowed;transform:none;box-shadow:none}
 .trade-card.green{background:#f0fdf4;border-color:var(--status-green)}
 .trade-card.yellow{background:#FFFBEB;border-color:var(--status-yellow)}
 .trade-card.red{background:#FEF2F2;border-color:var(--status-red)}
+.trade-card.grey{background:#F8F9FA;border-color:#6B7280}
 .trade-card h4{margin-bottom:6px;display:flex;align-items:center;gap:8px}
 .trade-card .details{font-size:.85rem;color:#6b7280;margin-bottom:6px}
 .trade-card .action{font-size:.85rem;color:#374151;font-style:italic}
@@ -200,6 +221,7 @@ button:disabled{opacity:.5;cursor:not-allowed;transform:none;box-shadow:none}
 .ob-status-pill.green{background:#d4edda;color:#155724}
 .ob-status-pill.yellow{background:#fff3cd;color:#856404}
 .ob-status-pill.red{background:#f8d7da;color:#721c24}
+.ob-status-pill.grey{background:#e9ecef;color:#495057}
 .ob-trade-detail{background:#f8f9fa;border:1px solid #e9ecef;border-radius:8px;padding:20px;margin-bottom:16px}
 .ob-trade-detail h4{margin-bottom:10px;color:#1a1a2e;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .ob-trade-detail .ob-trade-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:6px;margin-bottom:12px;font-size:.9rem}
@@ -216,6 +238,7 @@ button:disabled{opacity:.5;cursor:not-allowed;transform:none;box-shadow:none}
 .ob-badge.green{background:#7CB342}
 .ob-badge.yellow{background:#FF9800}
 .ob-badge.red{background:#F44336}
+.ob-badge.grey{background:#6B7280}
 .ob-unmatched-table{width:100%;border-collapse:collapse;background:#fff;border:1px solid #e9ecef;border-radius:8px;overflow:hidden}
 .ob-unmatched-table th{background:#f8f9fa;padding:10px 14px;text-align:left;font-weight:600;color:#495057;border-bottom:2px solid #e9ecef;font-size:.85rem}
 .ob-unmatched-table td{padding:8px 14px;border-bottom:1px solid #e9ecef;font-size:.85rem;color:#4b5563}
@@ -298,11 +321,14 @@ button:disabled{opacity:.5;cursor:not-allowed;transform:none;box-shadow:none}
   .trade-card.green{background:#f0fdf4!important;border-color:#10B981!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
   .trade-card.yellow{background:#FFFBEB!important;border-color:#F59E0B!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
   .trade-card.red{background:#FEF2F2!important;border-color:#EF4444!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+  .trade-card.grey{background:#F8F9FA!important;border-color:#6B7280!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
   .result-badge.yellow{background:#FEF3C7!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
   .ob-summary-card{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
   .ob-badge{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
   .ob-status-pill{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
   .info-box{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+  .stats-dashboard{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+  .stat-card{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
   .report-footer{margin-top:30px;font-size:.7rem}
   .ob-trade-detail{background:#f8f9fa!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
   @page{margin:0.5in;size:A4}
@@ -469,6 +495,39 @@ button:disabled{opacity:.5;cursor:not-allowed;transform:none;box-shadow:none}
     <div class="project-details">IPEX Apartments &nbsp;·&nbsp; IPEX Street, Southbank, VIC, 3006 &nbsp;·&nbsp; Builder: Horizon Construction &nbsp;·&nbsp; Generated 12 February 2026</div>
   </div>
   <div class="report-content">
+    <!-- HEADLINE STATS DASHBOARD -->
+    <div class="stats-dashboard">
+      <h3 class="stats-title">Trade Payment Data</h3>
+      <div class="stats-grid">
+        <div class="stat-card green">
+          <div class="stat-count">2</div>
+          <div class="stat-label">✅ Payment & progress align</div>
+        </div>
+        <div class="stat-card yellow">
+          <div class="stat-count">1</div>
+          <div class="stat-label">⚠️ Payment is behind certified progress</div>
+        </div>
+        <div class="stat-card grey">
+          <div class="stat-count">1</div>
+          <div class="stat-label">❌ Certified progress but no payment data</div>
+        </div>
+        <div class="stat-card red">
+          <div class="stat-count">1</div>
+          <div class="stat-label">🔴 Payment exceeds certified progress</div>
+        </div>
+      </div>
+      <div class="stats-summary">
+        <div class="summary-item">
+          <span class="summary-label">Work Certified:</span>
+          <span class="summary-value">$3,525,000</span>
+        </div>
+        <div class="summary-item">
+          <span class="summary-label">Received Payment:</span>
+          <span class="summary-value">$3,155,000</span>
+        </div>
+      </div>
+    </div>
+
     <div class="report-status">
       <div>
         <div class="result-badge yellow">🟡 Review Recommended</div>
@@ -503,13 +562,13 @@ button:disabled{opacity:.5;cursor:not-allowed;transform:none;box-shadow:none}
       <div class="action">Recommended Action: Payment data does not support claimed progress. Consider verifying progress on site and/or requesting justification from the head contractor for payment shortfall against certified progress.</div>
     </div>
 
-    <div class="trade-card red">
-      <h4>🔴 Flooring (Carpet / Tiles)</h4>
-      <div class="details">QS Claim: $125,000 (25% complete) · Payment data suggests 100% under-payment (no payments recorded) &nbsp;·&nbsp; Status: <strong>Significant Discrepancies</strong></div>
-      <div class="action">Recommended Action: Payment data does not support claimed progress. Consider verifying progress on site and/or requesting justification from the head contractor for payment shortfall against certified progress.</div>
+    <div class="trade-card grey">
+      <h4>🔵 Flooring (Carpet / Tiles)</h4>
+      <div class="details">QS Claim: $125,000 (25% complete) · No payment data &nbsp;·&nbsp; Status: <strong>No Payment Data</strong></div>
+      <div class="action">Recommended Action: No payment records found for this trade. Consider verifying progress on site and/or requesting payment information from the head contractor.</div>
     </div>
 
-    <div class="info-box">ℹ️ <strong>Note:</strong> For detailed payment amounts and full transaction history, ask your builder to enable Open Book mode.</div>
+    <div class="info-box">ℹ️ <strong>Note:</strong> This verification uses actual IPEX payment data to assess progress claims against recorded payments to subcontractors.</div>
 
     <div class="report-footer">
       Report generated February 12, 2026 &nbsp;|&nbsp; ABC Developer &nbsp;|&nbsp; ABC Construction<br>
@@ -528,6 +587,39 @@ button:disabled{opacity:.5;cursor:not-allowed;transform:none;box-shadow:none}
     <div class="project-details">IPEX Apartments &nbsp;·&nbsp; IPEX Street, Southbank, VIC, 3006 &nbsp;·&nbsp; Builder: Horizon Construction &nbsp;·&nbsp; Generated 12 February 2026</div>
   </div>
   <div class="report-content">
+    <!-- HEADLINE STATS DASHBOARD -->
+    <div class="stats-dashboard">
+      <h3 class="stats-title">Trade Payment Data</h3>
+      <div class="stats-grid">
+        <div class="stat-card green">
+          <div class="stat-count">2</div>
+          <div class="stat-label">✅ Payment & progress align</div>
+        </div>
+        <div class="stat-card yellow">
+          <div class="stat-count">1</div>
+          <div class="stat-label">⚠️ Payment is behind certified progress</div>
+        </div>
+        <div class="stat-card grey">
+          <div class="stat-count">1</div>
+          <div class="stat-label">❌ Certified progress but no payment data</div>
+        </div>
+        <div class="stat-card red">
+          <div class="stat-count">1</div>
+          <div class="stat-label">🔴 Payment exceeds certified progress</div>
+        </div>
+      </div>
+      <div class="stats-summary">
+        <div class="summary-item">
+          <span class="summary-label">Work Certified:</span>
+          <span class="summary-value">$3,525,000</span>
+        </div>
+        <div class="summary-item">
+          <span class="summary-label">Received Payment:</span>
+          <span class="summary-value">$3,155,000</span>
+        </div>
+      </div>
+    </div>
+
     <div class="report-status">
       <div>
         <div class="result-badge" style="background:#FEE2E2;color:#991B1B">🔴 Significant Discrepancies</div>
@@ -552,7 +644,8 @@ button:disabled{opacity:.5;cursor:not-allowed;transform:none;box-shadow:none}
     <div class="ob-status-pills">
       <span class="ob-status-pill green">2 Payment &amp; progress align</span>
       <span class="ob-status-pill yellow">1 Review Recommended</span>
-      <span class="ob-status-pill red">2 Significant Discrepancies</span>
+      <span class="ob-status-pill red">1 Significant Discrepancies</span>
+      <span class="ob-status-pill grey">1 No Payment Data</span>
     </div>
 
     <h3 style="margin-bottom:16px">Trade-by-Trade Analysis</h3>
@@ -601,15 +694,15 @@ button:disabled{opacity:.5;cursor:not-allowed;transform:none;box-shadow:none}
       <div class="ob-action"><strong>Recommended Action:</strong> Payment data does not support claimed progress. Consider verifying progress on site and/or requesting justification from the head contractor for payment shortfall against certified progress.</div>
     </div>
 
-    <!-- Flooring (RED) -->
+    <!-- Flooring (NO DATA) -->
     <div class="ob-trade-detail">
-      <h4>Flooring — Carpet / Tiles <span class="ob-badge red">ACTION REQUIRED</span></h4>
+      <h4>Flooring — Carpet / Tiles <span class="ob-badge grey">NO PAYMENT DATA</span></h4>
       <div class="ob-trade-grid">
         <span><strong>QS Claim:</strong> $125,000 (25% complete)</span>
-        <span><strong>IPEX Paid:</strong> $0</span>
-        <span><strong>Variance:</strong> 100% ($125,000 under — no payments recorded)</span>
+        <span><strong>IPEX Paid:</strong> No payment data</span>
+        <span><strong>Variance:</strong> No payment data available</span>
       </div>
-      <div class="ob-action"><strong>Recommended Action:</strong> Payment data does not support claimed progress. Consider verifying progress on site and/or requesting justification from the head contractor for payment shortfall against certified progress.</div>
+      <div class="ob-action"><strong>Recommended Action:</strong> No payment records found for this trade. Consider verifying progress on site and/or requesting payment information from the head contractor.</div>
     </div>
 
     <div class="report-footer">
@@ -792,7 +885,8 @@ function showResults(){
       <div class="result-items">
         <div class="result-item">🟢 <span><strong>2 trades</strong> — Payment &amp; progress align</span></div>
         <div class="result-item">🟡 <span><strong>1 trade</strong> — Review Recommended</span></div>
-        <div class="result-item">🔴 <span><strong>2 trades</strong> — Significant Discrepancies</span></div>
+        <div class="result-item">🔴 <span><strong>1 trade</strong> — Significant Discrepancies</span></div>
+        <div class="result-item">🔵 <span><strong>1 trade</strong> — No Payment Data</span></div>
       </div>
     </div>
     <div class="modal-footer">
