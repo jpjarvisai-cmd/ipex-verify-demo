@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IPEX Verify — QS Report Verification</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+--green:#3DE680;--green-dark:#32c96d;--navy-1:#0B1120;--navy-2:#0B1120;
+--card-bg:#1A2332;--sidebar-bg:#0B1120;
+--status-green:#10B981;--status-yellow:#F59E0B;--status-red:#EF4444;
+--bg:#0B1120;--bg2:#F5F7FA;--font:-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,Arial,sans-serif;
+--shadow:0 2px 8px rgba(0,0,0,.3);--radius:12px;
+}
+body{font-family:var(--font);background:var(--bg);color:#fff;min-height:100vh;display:flex}
+a{color:var(--green);text-decoration:none}
+button{font-family:var(--font);cursor:pointer;border:none;font-size:.9rem;border-radius:8px;padding:10px 20px;transition:all .2s}
+button:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.15)}
+button:disabled{opacity:.5;cursor:not-allowed;transform:none;box-shadow:none}
+.btn-primary{background:var(--green);color:#0B1120;font-weight:600}
+.btn-primary:hover:not(:disabled){background:var(--green-dark)}
+.btn-secondary{background:#e5e7eb;color:#374151}
+.btn-secondary:hover{background:#d1d5db}
+
+/* SIDEBAR */
+.sidebar{width:270px;background:var(--sidebar-bg);color:#fff;padding:20px 16px;flex-shrink:0;display:flex;flex-direction:column;min-height:100vh;border-right:1px solid rgba(255,255,255,.08)}
+.sidebar-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:32px}
+.sidebar-logo{display:flex;align-items:center;overflow:visible}
+.sidebar-logo img{height:20px;width:auto;max-width:180px}
+.sidebar-logo .logo-light{display:none}
+.sidebar-logo .logo-dark{display:block}
+.theme-toggle{width:24px;height:24px;border-radius:50%;border:1.5px solid rgba(255,255,255,.25);background:transparent;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;font-size:.7rem;transition:all .2s}
+.theme-toggle .toggle-icon{font-size:.7rem;line-height:1;color:rgba(255,255,255,.5)}
+.theme-toggle:hover{border-color:rgba(255,255,255,.5)}.theme-toggle:hover .toggle-icon{color:#fff}
+.sidebar nav{display:flex;flex-direction:column;gap:4px}
+.sidebar nav a{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:8px;color:#c0c8d4;font-size:.9rem;transition:background .2s;text-decoration:none}
+.sidebar nav a:hover,.sidebar nav a.active{background:rgba(255,255,255,.08);color:#fff}
+.nav-icon{width:20px;text-align:center;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.nav-icon svg{width:18px;height:18px}
+.nav-badge{margin-left:auto;background:var(--green);color:#0B1120;font-size:.7rem;font-weight:700;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center}
+.nav-spacer{height:16px}
+.sidebar-bottom{margin-top:auto;display:flex;align-items:center;gap:10px;padding:8px 4px;cursor:pointer}
+.sidebar-bottom .avatar{width:32px;height:32px;border-radius:50%;background:#2d3e50;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.75rem;color:#c0c8d4;flex-shrink:0}
+.sidebar-bottom .user-name{font-size:.85rem;color:#c0c8d4;flex:1}
+.sidebar-bottom .chevron{color:#667;font-size:.7rem}
+
+/* MAIN */
+.main{flex:1;padding:32px 40px;overflow-y:auto;background:var(--bg)}
+.page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px}
+.page-title{font-size:1.6rem;font-weight:700;color:#fff}
+.filter-btn{background:none;border:none;color:#8899aa;font-size:1.2rem;cursor:pointer;padding:6px}
+.filter-btn:hover{color:#fff}
+
+/* PROJECT CARDS ROW */
+.project-row{display:flex;flex-wrap:wrap;gap:24px;padding-bottom:8px}
+.project-card{background:var(--card-bg);border-radius:var(--radius);overflow:hidden;width:calc(25% - 18px);min-width:260px;transition:transform .2s,box-shadow .2s;cursor:default}
+.project-card:hover{transform:translateY(-3px);box-shadow:0 8px 24px rgba(0,0,0,.3)}
+.card-img{height:240px;position:relative;overflow:hidden}
+.card-img img,.card-img .img-placeholder{width:100%;height:100%;object-fit:cover;display:block}
+.img-placeholder{display:flex;align-items:center;justify-content:center}
+.card-img .ipex-badge{position:absolute;top:12px;right:12px;width:40px;height:40px;background:#0B1120;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 10px rgba(0,0,0,.5);border:2px solid rgba(61,234,124,.35);overflow:hidden}
+.card-img .ipex-badge img{width:22px;height:auto}
+.card-img .ipex-badge .badge-dark{display:none}
+.card-img .ipex-badge .badge-light{display:block}
+.card-img .ipex-badge svg{width:20px;height:20px}
+.card-img .info-btn{position:absolute;bottom:10px;right:10px;width:24px;height:24px;background:rgba(0,0,0,.55);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:600;color:#e0e0e0;backdrop-filter:blur(4px);cursor:pointer;border:1px solid rgba(255,255,255,.15)}
+.card-body{padding:18px 20px 20px}
+.card-body h3{font-size:1rem;font-weight:600;color:#fff;margin-bottom:4px}
+.card-body .addr{font-size:.85rem;color:#8899aa;margin-bottom:12px}
+.progress-wrap{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.progress-bar{flex:1;height:7px;background:#2d3e50;border-radius:3px;overflow:hidden}
+.progress-bar div{height:100%;border-radius:3px;transition:width .6s}
+.progress-bar .green-fill{background:var(--green)}
+.progress-bar .mixed-fill{background:linear-gradient(90deg,var(--green) 60%,#EF4444 60%)}
+.progress-pct{font-size:.8rem;color:#8899aa;white-space:nowrap}
+
+/* Verify button on cards */
+.verify-btn{width:100%;padding:7px 12px;border-radius:8px;font-size:.78rem;font-weight:600;background:rgba(61,230,128,.12);color:var(--green);border:1px solid rgba(61,230,128,.25);cursor:pointer;transition:all .2s;margin-top:2px;opacity:0;max-height:0;overflow:hidden;padding:0 12px;margin:0}
+.project-card:hover .verify-btn{opacity:1;max-height:40px;padding:7px 12px;margin-top:2px}
+.verify-btn:hover{background:rgba(61,230,128,.22);transform:none;box-shadow:none}
+.status-badge{display:inline-flex;align-items:center;gap:4px;font-size:.7rem;padding:4px 8px;border-radius:6px;margin-bottom:6px;line-height:1.3}
+.status-badge.yellow{background:rgba(245,158,11,.15);color:#F59E0B}
+.verify-link{font-size:.75rem;color:var(--green);font-weight:600;cursor:pointer}
+
+/* OVERLAY + MODAL */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;z-index:100;opacity:0;pointer-events:none;transition:opacity .3s}
+.overlay.open{opacity:1;pointer-events:all}
+.modal{background:#fff;border-radius:16px;width:560px;max-width:95vw;max-height:90vh;overflow-y:auto;transform:scale(.95);transition:transform .3s;box-shadow:0 20px 60px rgba(0,0,0,.2);color:#1a1a2e}
+.overlay.open .modal{transform:scale(1)}
+.modal-header{background:linear-gradient(135deg,#1a2332,#2d3e50);color:#fff;padding:20px 24px;border-radius:16px 16px 0 0;display:flex;align-items:center;justify-content:space-between}
+.modal-header .logo{display:flex;align-items:center}
+.modal-header .logo img{height:18px;width:auto}
+.modal-header .logo span{color:var(--green)}
+.modal-header .subtitle{font-size:.7rem;letter-spacing:1.5px;opacity:.8}
+.modal-body{padding:24px}
+.modal-footer{padding:0 24px 24px;display:flex;justify-content:flex-end;gap:10px}
+
+/* DROP ZONE */
+.dropzone{border:2px dashed #d1d5db;border-radius:12px;padding:40px;text-align:center;cursor:pointer;transition:border-color .2s,background .2s}
+.dropzone:hover,.dropzone.dragover{border-color:var(--green);background:#f0fdf4}
+.dropzone .icon{font-size:2.5rem;margin-bottom:8px}
+.dropzone .main-text{font-size:1rem;font-weight:600;color:#374151}
+.dropzone .sub-text{font-size:.8rem;color:#9ca3af;margin-top:4px}
+.file-card{display:flex;align-items:center;gap:12px;background:#F5F7FA;border:1px solid #e5e7eb;border-radius:10px;padding:12px 16px;margin:12px 0}
+.file-card .ficon{font-size:1.8rem}
+.file-card .finfo{flex:1}
+.file-card .finfo .fname{font-weight:600;font-size:.9rem}
+.file-card .finfo .fsize{font-size:.75rem;color:#6b7280}
+.file-card .fremove{color:#ef4444;cursor:pointer;font-size:1.2rem;padding:4px}
+.secure-note{text-align:center;font-size:.8rem;color:#6b7280;margin-top:16px}
+.project-info{font-size:.85rem;color:#6b7280;margin-bottom:16px}
+.project-info strong{color:#374151}
+
+/* PROCESSING */
+.processing-steps{margin:20px 0}
+.step{display:flex;align-items:center;gap:10px;padding:6px 0;font-size:.85rem}
+.step .check{width:20px;text-align:center}
+.step .time{margin-left:auto;font-size:.75rem;color:#9ca3af}
+.step.done{color:var(--status-green)}
+.step.active{color:#3b82f6;font-weight:600}
+.step.pending{color:#9ca3af}
+.shimmer-bar{height:8px;border-radius:4px;background:#e5e7eb;overflow:hidden;margin:16px 0}
+.shimmer-bar div{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--green),#a5d660,var(--green));background-size:200% 100%;animation:shimmer 1.5s infinite;transition:width .5s}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.proc-note{text-align:center;font-size:.8rem;color:#6b7280;margin-top:8px}
+
+/* RESULTS */
+.result-badge{display:inline-flex;align-items:center;gap:6px;font-size:1rem;font-weight:700;padding:8px 20px;border-radius:24px;margin:12px 0}
+.result-badge.yellow{background:#FEF3C7;color:#92400E}
+.result-stat{font-size:.85rem;color:#6b7280;margin:4px 0}
+.result-stat strong{color:#374151}
+.result-items{margin:16px 0}
+.result-item{display:flex;align-items:center;gap:8px;font-size:.85rem;padding:4px 0}
+
+/* REPORT SELECTION PAGE */
+#report-select-page{display:none}
+.report-select-container{max-width:800px;margin:60px auto;padding:0 24px}
+.report-select-header{text-align:center;margin-bottom:40px}
+.report-select-header .logo{display:flex;align-items:center;justify-content:center;margin-bottom:8px}
+.report-select-header .logo img{height:30px;width:auto}
+.report-select-header .logo .logo-light{display:none}
+[data-theme="light"] .report-select-header .logo .logo-dark{display:none}
+[data-theme="light"] .report-select-header .logo .logo-light{display:inline}
+.report-select-header .logo .x-green{color:var(--green)}
+.report-select-header h2{font-size:1.3rem;font-weight:600;color:#c0c8d4;margin-bottom:4px}
+.report-select-header p{font-size:.85rem;color:#667}
+.report-select-cards{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:32px}
+.report-select-card{background:var(--card-bg);border:2px solid rgba(255,255,255,.08);border-radius:16px;padding:32px 28px;cursor:pointer;transition:all .25s;position:relative;overflow:hidden}
+.report-select-card:hover{border-color:var(--green);transform:translateY(-4px);box-shadow:0 12px 40px rgba(61,230,128,.15)}
+.report-select-card .card-icon{font-size:2.5rem;margin-bottom:16px}
+.report-select-card h3{font-size:1.15rem;font-weight:700;color:#fff;margin-bottom:8px}
+.report-select-card .card-desc{font-size:.85rem;color:#8899aa;line-height:1.5;margin-bottom:16px}
+.report-select-card .card-features{list-style:none;margin-bottom:20px}
+.report-select-card .card-features li{font-size:.8rem;color:#a0aec0;padding:3px 0;display:flex;align-items:center;gap:6px}
+.report-select-card .card-features li::before{content:'✓';color:var(--green);font-weight:700;font-size:.7rem}
+.report-select-card .select-btn{width:100%;padding:10px;border-radius:8px;font-size:.85rem;font-weight:600;border:none;cursor:pointer;transition:all .2s}
+.report-select-card.standard .select-btn{background:rgba(61,230,128,.12);color:var(--green);border:1px solid rgba(61,230,128,.25)}
+.report-select-card.standard:hover .select-btn{background:var(--green);color:#0B1120}
+.report-select-card.openbook .select-btn{background:rgba(96,165,250,.12);color:#60a5fa;border:1px solid rgba(96,165,250,.25)}
+.report-select-card.openbook:hover .select-btn{background:#60a5fa;color:#0B1120}
+.report-select-back{text-align:center}
+.report-select-back button{background:none;border:1px solid rgba(255,255,255,.15);color:#8899aa;padding:10px 24px;border-radius:8px;font-size:.85rem;cursor:pointer;transition:all .2s}
+.report-select-back button:hover{border-color:rgba(255,255,255,.3);color:#fff;transform:translateY(-1px)}
+
+/* REPORT PAGES (6a and 6b) */
+.report-page{display:none}
+.report-header{background:linear-gradient(135deg,#1a2332,#2d3e50);color:#fff;padding:24px 40px}
+.report-header .top{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.report-header .logo{display:flex;align-items:center}
+.report-header .logo img{height:22px;width:auto}
+.report-header .logo span{color:var(--green)}
+.report-header .mode-badge{padding:4px 12px;border-radius:20px;font-size:.7rem;letter-spacing:1px;font-weight:600}
+.report-header .mode-badge.standard{background:rgba(61,230,128,.2);color:var(--green)}
+.report-header .mode-badge.openbook{background:rgba(96,165,250,.2);color:#60a5fa}
+.report-header .project-details{font-size:.85rem;opacity:.85}
+.report-content{max-width:900px;margin:0 auto;padding:32px 40px;background:#fff;color:#1a1a2e}
+.report-status{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;margin-bottom:28px}
+.report-payment{font-size:.9rem;color:#6b7280}
+.report-payment strong{font-size:1.6rem;color:#1a1a2e;display:block}
+.trade-card{border-radius:var(--radius);padding:20px 24px;margin-bottom:16px;border-left:4px solid}
+.trade-card.green{background:#f0fdf4;border-color:var(--status-green)}
+.trade-card.yellow{background:#FFFBEB;border-color:var(--status-yellow)}
+.trade-card.red{background:#FEF2F2;border-color:var(--status-red)}
+.trade-card h4{margin-bottom:6px;display:flex;align-items:center;gap:8px}
+.trade-card .details{font-size:.85rem;color:#6b7280;margin-bottom:6px}
+.trade-card .action{font-size:.85rem;color:#374151;font-style:italic}
+.info-box{background:#EFF6FF;border:1px solid #BFDBFE;border-radius:10px;padding:14px 18px;font-size:.85rem;color:#1e40af;margin:20px 0}
+.report-footer{text-align:center;font-size:.75rem;color:#9ca3af;border-top:1px solid #e5e7eb;padding:20px 0;margin-top:20px}
+.report-actions{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px}
+
+/* OPEN BOOK SPECIFIC */
+.ob-summary-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.ob-summary-card{background:#f8f9fa;border:1px solid #e9ecef;border-radius:8px;padding:16px;text-align:center}
+.ob-summary-card .val{font-size:1.5rem;font-weight:700;color:#1a1a2e}
+.ob-summary-card .val.red-text{color:var(--status-red)}
+.ob-summary-card .lbl{font-size:.75rem;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;margin-top:2px}
+.ob-status-pills{display:flex;gap:8px;margin-bottom:24px}
+.ob-status-pill{padding:5px 12px;border-radius:20px;font-weight:600;font-size:.8rem}
+.ob-status-pill.green{background:#d4edda;color:#155724}
+.ob-status-pill.yellow{background:#fff3cd;color:#856404}
+.ob-status-pill.red{background:#f8d7da;color:#721c24}
+.ob-trade-detail{background:#f8f9fa;border:1px solid #e9ecef;border-radius:8px;padding:20px;margin-bottom:16px}
+.ob-trade-detail h4{margin-bottom:10px;color:#1a1a2e;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.ob-trade-detail .ob-trade-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:6px;margin-bottom:12px;font-size:.9rem}
+.ob-trade-detail .ob-trade-grid span{color:#6b7280}
+.ob-trade-detail .ob-trade-grid strong{color:#1a1a2e}
+.ob-payments{background:#fff;border:1px solid #e9ecef;border-radius:6px;padding:12px 16px;margin:10px 0}
+.ob-payments .ob-payment-title{font-weight:600;font-size:.85rem;margin-bottom:6px;color:#374151}
+.ob-payment-row{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #f0f0f0;font-size:.85rem;color:#4b5563}
+.ob-payment-row:last-child{border-bottom:none}
+.ob-payment-row .amt{font-weight:600;color:#1a1a2e}
+.ob-reasoning{background:#fff;padding:10px 14px;border-radius:4px;margin:8px 0;border-left:4px solid var(--status-green);font-style:italic;font-size:.85rem;color:#4b5563}
+.ob-action{font-size:.85rem;color:#374151;font-style:italic;margin-top:8px}
+.ob-badge{display:inline-block;padding:3px 8px;border-radius:12px;font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#fff}
+.ob-badge.green{background:#7CB342}
+.ob-badge.yellow{background:#FF9800}
+.ob-badge.red{background:#F44336}
+.ob-unmatched-table{width:100%;border-collapse:collapse;background:#fff;border:1px solid #e9ecef;border-radius:8px;overflow:hidden}
+.ob-unmatched-table th{background:#f8f9fa;padding:10px 14px;text-align:left;font-weight:600;color:#495057;border-bottom:2px solid #e9ecef;font-size:.85rem}
+.ob-unmatched-table td{padding:8px 14px;border-bottom:1px solid #e9ecef;font-size:.85rem;color:#4b5563}
+
+/* EMAIL MODAL */
+.form-group{margin-bottom:14px}
+.form-group label{display:block;font-size:.8rem;font-weight:600;color:#374151;margin-bottom:4px}
+.form-group input,.form-group textarea{width:100%;border:1px solid #d1d5db;border-radius:8px;padding:10px 12px;font-size:.85rem;font-family:var(--font);transition:border-color .2s;color:#1a1a2e}
+.form-group input:focus,.form-group textarea:focus{outline:none;border-color:var(--green)}
+.form-group input[readonly]{background:#F5F7FA;color:#6b7280}
+.checkbox-label{display:flex;align-items:center;gap:8px;font-size:.85rem;cursor:pointer;color:#374151}
+.checkbox-label input{width:16px;height:16px;accent-color:var(--green)}
+
+/* SUCCESS */
+.success-content{text-align:center;padding:40px 24px}
+.success-content .big-icon{font-size:3.5rem;margin-bottom:12px}
+.success-content h2{margin-bottom:8px}
+.success-content p{color:#6b7280;font-size:.9rem;margin-bottom:24px;line-height:1.5}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-thumb{background:#2d3e50;border-radius:3px}
+
+/* LIGHT MODE */
+[data-theme="light"] body,.light-mode body{background:#F5F7FA;color:#1a1a2e}
+[data-theme="light"] .main{background:#F5F7FA}
+[data-theme="light"] .sidebar{background:#FFFFFF;border-right:1px solid #E5E7EB}
+[data-theme="light"] .sidebar-logo .logo-dark{display:none}
+[data-theme="light"] .sidebar-logo .logo-light{display:inline}
+[data-theme="light"] .modal-header .logo img{filter:none}
+[data-theme="light"] .report-header .logo img{filter:none}
+[data-theme="light"] .report-select-header h2{color:#111827}
+[data-theme="light"] .report-select-header p{color:#6B7280}
+[data-theme="light"] .sidebar nav a{color:#374151}
+[data-theme="light"] .sidebar nav a:hover,[data-theme="light"] .sidebar nav a.active{background:rgba(0,0,0,.06);color:#111827}
+[data-theme="light"] .sidebar-bottom .avatar{background:#E5E7EB;color:#374151}
+[data-theme="light"] .sidebar-bottom .user-name{color:#374151}
+[data-theme="light"] .sidebar-bottom .chevron{color:#9CA3AF}
+[data-theme="light"] .theme-toggle{border-color:rgba(0,0,0,.2)}
+[data-theme="light"] .theme-toggle .toggle-icon{color:#374151}
+[data-theme="light"] .page-title{color:#111827}
+[data-theme="light"] .filter-btn{color:#6B7280}
+[data-theme="light"] .filter-btn:hover{color:#111827}
+[data-theme="light"] .project-card{background:#FFFFFF;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+[data-theme="light"] .project-card:hover{box-shadow:0 8px 24px rgba(0,0,0,.12)}
+[data-theme="light"] .card-body h3{color:#111827}
+[data-theme="light"] .card-body .addr{color:#6B7280}
+[data-theme="light"] .progress-bar{background:#E5E7EB}
+[data-theme="light"] .progress-pct{color:#6B7280}
+[data-theme="light"] .verify-btn{background:rgba(61,230,128,.1);border-color:rgba(61,230,128,.3)}
+[data-theme="light"] .verify-btn:hover{background:rgba(61,230,128,.18)}
+[data-theme="light"] #report-select-page{color:#1a1a2e}
+[data-theme="light"] .report-select-header h2{color:#111827}
+[data-theme="light"] .report-select-header p{color:#6B7280}
+[data-theme="light"] .report-select-card{background:#FFFFFF;border-color:#E5E7EB}
+[data-theme="light"] .report-select-card h3{color:#111827}
+[data-theme="light"] .report-select-card .card-desc{color:#6B7280}
+[data-theme="light"] .report-select-card .card-features li{color:#6B7280}
+[data-theme="light"] .report-select-card:hover{border-color:var(--green);box-shadow:0 12px 40px rgba(61,230,128,.1)}
+[data-theme="light"] .report-select-back button{border-color:#D1D5DB;color:#6B7280}
+[data-theme="light"] .report-select-back button:hover{border-color:#9CA3AF;color:#111827}
+[data-theme="light"] ::-webkit-scrollbar-thumb{background:#D1D5DB}
+[data-theme="light"] .card-img .ipex-badge{box-shadow:0 2px 6px rgba(0,0,0,.15);background:#fff;border-color:rgba(0,0,0,.1)}
+[data-theme="light"] .card-img .ipex-badge .badge-light{display:none}
+[data-theme="light"] .card-img .ipex-badge .badge-dark{display:block}
+[data-theme="light"] .card-img .info-btn{background:rgba(0,0,0,.4)}
+[data-theme="light"] .status-badge.yellow{background:rgba(245,158,11,.1);color:#B45309}
+[data-theme="light"] .nav-badge{background:var(--green);color:#0B1120}
+[data-theme="light"] .sidebar .nav-spacer+a,.sidebar nav a{transition:background .2s,color .2s}
+
+/* PRINT STYLES */
+@media print{
+  body{background:#fff!important;color:#000!important;display:block!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+  .sidebar,.report-actions,.no-print,#report-select-page,#dashboard,.overlay{display:none!important}
+  .report-page{display:block!important;position:static!important}
+  .report-header{background:linear-gradient(135deg,#1A2332,#2D3E50)!important;color:#fff!important;padding:20px 30px!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+  .report-header .mode-badge{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+  .report-content{max-width:100%!important;padding:24px 30px!important;box-shadow:none!important}
+  .trade-card,.ob-trade-detail{break-inside:avoid;page-break-inside:avoid}
+  .trade-card.green{background:#f0fdf4!important;border-color:#10B981!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+  .trade-card.yellow{background:#FFFBEB!important;border-color:#F59E0B!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+  .trade-card.red{background:#FEF2F2!important;border-color:#EF4444!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+  .result-badge.yellow{background:#FEF3C7!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+  .ob-summary-card{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+  .ob-badge{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+  .ob-status-pill{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+  .info-box{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+  .report-footer{margin-top:30px;font-size:.7rem}
+  .ob-trade-detail{background:#f8f9fa!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+  @page{margin:0.5in;size:A4}
+}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<div class="sidebar" id="sidebar">
+  <div class="sidebar-top">
+    <div class="sidebar-logo"><img class="logo-dark" src="ipex-logo-light.svg" alt="IPEX"><img class="logo-light" src="ipex-logo-dark.svg" alt="IPEX"></div>
+    <div class="theme-toggle" onclick="toggleTheme()" title="Toggle light/dark mode"><span class="toggle-icon">☀</span></div>
+  </div>
+  <nav>
+    <a href="#" class="active" onclick="showDashboard()">
+      <span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg></span>All projects<span class="nav-badge">4</span>
+    </a>
+    <a href="#">
+      <span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg></span>Archived
+    </a>
+    <div class="nav-spacer"></div>
+    <a href="#">
+      <span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></span>Items requiring appro…<span class="nav-badge">4</span>
+    </a>
+    <a href="#">
+      <span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></span>Notifications<span class="nav-badge">21</span>
+    </a>
+  </nav>
+  <div class="sidebar-bottom">
+    <div class="avatar">JS</div>
+    <div class="user-name">John Smith</div>
+    <div class="chevron">⌃</div>
+  </div>
+</div>
+
+<!-- SCREEN 1: DASHBOARD -->
+<div class="main" id="dashboard">
+  <div class="page-header">
+    <h1 class="page-title">All projects</h1>
+    <div class="filter-btn">⫧</div>
+  </div>
+  <div class="project-row">
+
+    <!-- Card 1: IPEX Distribution Centre -->
+    <div class="project-card">
+      <div class="card-img">
+        <img src="card-img-1.jpg" alt="IPEX Distribution Centre">
+        <div class="ipex-badge"><img class="badge-light" src="ipex-x-light.svg" alt="IPEX"><img class="badge-dark" src="ipex-x-dark.svg" alt="IPEX"></div>
+        <div class="info-btn">i</div>
+      </div>
+      <div class="card-body">
+        <h3>IPEX Distribution Centre</h3>
+        <p class="addr">100 Warehouse St</p>
+        <div class="progress-wrap">
+          <div class="progress-bar"><div class="green-fill" style="width:2.8%"></div></div>
+          <span class="progress-pct">2.8%</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 2: IPEX Apartments (DEMO CARD) -->
+    <div class="project-card">
+      <div class="card-img">
+        <img src="card-img-2.jpg" alt="IPEX Apartments">
+        <div class="ipex-badge"><img class="badge-light" src="ipex-x-light.svg" alt="IPEX"><img class="badge-dark" src="ipex-x-dark.svg" alt="IPEX"></div>
+        <div class="info-btn">i</div>
+      </div>
+      <div class="card-body">
+        <h3>IPEX Apartments</h3>
+        <p class="addr">IPEX Street</p>
+        <div class="progress-wrap">
+          <div class="progress-bar"><div class="green-fill" style="width:43.79%"></div></div>
+          <span class="progress-pct">43.79%</span>
+        </div>
+        <button class="verify-btn" onclick="openUpload()" style="opacity:1;max-height:40px;padding:7px 12px;margin-top:6px">🔍 Verify QS Report</button>
+      </div>
+    </div>
+
+    <!-- Card 3: IPEX Townhouses -->
+    <div class="project-card">
+      <div class="card-img">
+        <img src="card-img-3.jpg" alt="IPEX Townhouses">
+        <div class="ipex-badge"><img class="badge-light" src="ipex-x-light.svg" alt="IPEX"><img class="badge-dark" src="ipex-x-dark.svg" alt="IPEX"></div>
+        <div class="info-btn">i</div>
+      </div>
+      <div class="card-body">
+        <h3>IPEX Townhouses</h3>
+        <p class="addr">299 King Street</p>
+        <div class="progress-wrap">
+          <div class="progress-bar"><div class="green-fill" style="width:63.14%"></div></div>
+          <span class="progress-pct">63.14%</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 4: Project 1 -->
+    <div class="project-card">
+      <div class="card-img">
+        <img src="card-img-4.jpg" alt="Project 1">
+        <div class="ipex-badge"><img class="badge-light" src="ipex-x-light.svg" alt="IPEX"><img class="badge-dark" src="ipex-x-dark.svg" alt="IPEX"></div>
+        <div class="info-btn">i</div>
+      </div>
+      <div class="card-body">
+        <h3>Project 1</h3>
+        <p class="addr">15 Ellis Street</p>
+        <div class="progress-wrap">
+          <div class="progress-bar"><div class="green-fill" style="width:30%"></div></div>
+          <span class="progress-pct">30%</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- SCREEN 5b: REPORT SELECTION -->
+<div id="report-select-page">
+  <div class="report-select-container">
+    <div class="report-select-header">
+      <div class="logo"><img class="logo-dark" src="ipex-logo-light.svg" alt="IPEX" style="height:40px"><img class="logo-light" src="ipex-logo-dark.svg" alt="IPEX" style="height:40px"></div>
+      <h2>Select Report Type</h2>
+      <p>IPEX Apartments · Horizon Construction · Verified February 12, 2026</p>
+    </div>
+    <div class="report-select-cards">
+      <div class="report-select-card standard" onclick="showStandardReport()">
+        <div class="card-icon">📊</div>
+        <h3>Standard Report</h3>
+        <div class="card-desc">Variance detection with status indicators and recommended actions. Suitable for sharing with all project stakeholders.</div>
+        <ul class="card-features">
+          <li>Trade-by-trade variance analysis</li>
+          <li>Status indicators (Aligned / Review / Action)</li>
+          <li>Recommended actions per trade</li>
+          <li>No dollar values disclosed</li>
+        </ul>
+        <button class="select-btn">View Standard Report →</button>
+      </div>
+      <div class="report-select-card openbook" onclick="showOpenBookReport()">
+        <div class="card-icon">📖</div>
+        <h3>Open Book Report</h3>
+        <div class="card-desc">Full transparency including dollar values, payment breakdowns and transaction history per trade.</div>
+        <ul class="card-features">
+          <li>Complete financial breakdown</li>
+          <li>IPEX payment details per trade</li>
+          <li>Subcontractor payment trail</li>
+          <li>Matching confidence indicators</li>
+        </ul>
+        <button class="select-btn">View Open Book Report →</button>
+      </div>
+    </div>
+    <div class="report-select-back">
+      <button onclick="showResults()">← Back to Results Summary</button>
+    </div>
+  </div>
+</div>
+
+<!-- SCREEN 6a: STANDARD REPORT -->
+<div id="standard-report-page" class="report-page">
+  <div class="report-header">
+    <div class="top">
+      <div><div class="logo"><img src="ipex-logo-light.svg" alt="IPEX" style="height:28px"></div><div style="font-size:.7rem;letter-spacing:1.5px;opacity:.7">QS VERIFICATION REPORT</div></div>
+      <div class="mode-badge standard">STANDARD REPORT</div>
+    </div>
+    <div class="project-details">IPEX Apartments &nbsp;·&nbsp; IPEX Street, Southbank, VIC, 3006 &nbsp;·&nbsp; Builder: Horizon Construction &nbsp;·&nbsp; Generated 12 February 2026</div>
+  </div>
+  <div class="report-content">
+    <div class="report-status">
+      <div>
+        <div class="result-badge yellow">🟡 Review Recommended</div>
+        <p style="font-size:.9rem;color:#6b7280;margin-top:4px">Some payment variances detected when compared to certified progress.</p>
+      </div>
+      <div class="report-payment">QS Recommended Payment<strong>$850,000</strong></div>
+    </div>
+
+    <div class="report-actions no-print">
+      <button class="btn-primary" onclick="printReport('standard-report-page')">💾 Download PDF</button>
+      <button class="btn-secondary" onclick="openEmail()">📧 Email to Builder</button>
+      <button class="btn-secondary" onclick="showReportSelect()">← Back</button>
+    </div>
+
+    <h3 style="margin-bottom:16px">Trade Analysis</h3>
+
+    <div class="trade-card green">
+      <h4>🟢 Plumbing, Concrete, Framing, Lifts, Demolition (8 trades)</h4>
+      <div class="details">Payment data suggests under 8% variance from certified progress</div>
+      <div class="action">Recommended Action: Payment is aligned with certified progress – unless other information to the contrary, no action required.</div>
+    </div>
+
+    <div class="trade-card yellow">
+      <h4>🟡 Structural Steel</h4>
+      <div class="details">QS Claim: $720,000 (72% complete) · Payment data suggests 17% under-payment &nbsp;·&nbsp; Status: <strong>Review Recommended</strong></div>
+      <div class="action">Recommended Action: Payment data does not support claimed progress. Consider verifying progress on site and/or requesting justification from the head contractor for payment shortfall against certified progress.</div>
+    </div>
+
+    <div class="trade-card red">
+      <h4>🔴 Electrical</h4>
+      <div class="details">QS Claim: $980,000 (65% complete) · Payment data suggests 34% under-payment &nbsp;·&nbsp; Status: <strong>Significant Discrepancies</strong></div>
+      <div class="action">Recommended Action: Payment data does not support claimed progress. Consider verifying progress on site and/or requesting justification from the head contractor for payment shortfall against certified progress.</div>
+    </div>
+
+    <div class="trade-card red">
+      <h4>🔴 Flooring (Carpet / Tiles)</h4>
+      <div class="details">QS Claim: $125,000 (25% complete) · Payment data suggests 100% under-payment (no payments recorded) &nbsp;·&nbsp; Status: <strong>Significant Discrepancies</strong></div>
+      <div class="action">Recommended Action: Payment data does not support claimed progress. Consider verifying progress on site and/or requesting justification from the head contractor for payment shortfall against certified progress.</div>
+    </div>
+
+    <div class="info-box">ℹ️ <strong>Note:</strong> For detailed payment amounts and full transaction history, ask your builder to enable Open Book mode.</div>
+
+    <div class="report-footer">
+      Report generated February 12, 2026 &nbsp;|&nbsp; ABC Developer &nbsp;|&nbsp; ABC Construction<br>
+      For support: verify@ipex.com.au &nbsp;|&nbsp; This report uses actual IPEX payment data
+    </div>
+  </div>
+</div>
+
+<!-- SCREEN 6b: OPEN BOOK REPORT -->
+<div id="openbook-report-page" class="report-page">
+  <div class="report-header">
+    <div class="top">
+      <div><div class="logo"><img src="ipex-logo-light.svg" alt="IPEX" style="height:28px"></div><div style="font-size:.7rem;letter-spacing:1.5px;opacity:.7">QS VERIFICATION REPORT</div></div>
+      <div class="mode-badge openbook">OPEN BOOK REPORT</div>
+    </div>
+    <div class="project-details">IPEX Apartments &nbsp;·&nbsp; IPEX Street, Southbank, VIC, 3006 &nbsp;·&nbsp; Builder: Horizon Construction &nbsp;·&nbsp; Generated 12 February 2026</div>
+  </div>
+  <div class="report-content">
+    <div class="report-status">
+      <div>
+        <div class="result-badge" style="background:#FEE2E2;color:#991B1B">🔴 Significant Discrepancies</div>
+        <p style="font-size:.9rem;color:#6b7280;margin-top:4px">Significant payment variances detected when compared to certified progress.</p>
+      </div>
+    </div>
+
+    <div class="report-actions no-print">
+      <button class="btn-primary" onclick="printReport('openbook-report-page')">💾 Download PDF</button>
+      <button class="btn-secondary" onclick="openEmail()">📧 Email to Builder</button>
+      <button class="btn-secondary" onclick="showReportSelect()">← Back</button>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="ob-summary-grid" style="grid-template-columns:repeat(5,1fr)">
+      <div class="ob-summary-card"><div class="val">60%</div><div class="lbl">QS Overall Completion</div></div>
+      <div class="ob-summary-card"><div class="val">$14,200,000</div><div class="lbl">QS Total Value of Work</div></div>
+      <div class="ob-summary-card"><div class="val">$487,000</div><div class="lbl">QS Recommended Payment</div></div>
+      <div class="ob-summary-card"><div class="val">$12,800,000</div><div class="lbl">IPEX Actual Payments to Date</div></div>
+      <div class="ob-summary-card"><div class="val red-text">-$1,400,000</div><div class="lbl">Variance (QS Claims − IPEX Paid)</div></div>
+    </div>
+    <div class="ob-status-pills">
+      <span class="ob-status-pill green">2 Payment &amp; progress align</span>
+      <span class="ob-status-pill yellow">1 Review Recommended</span>
+      <span class="ob-status-pill red">2 Significant Discrepancies</span>
+    </div>
+
+    <h3 style="margin-bottom:16px">Trade-by-Trade Analysis</h3>
+
+    <!-- Plumbing (GREEN) -->
+    <div class="ob-trade-detail">
+      <h4>Plumbing <span class="ob-badge green">ALIGNED</span></h4>
+      <div class="ob-trade-grid">
+        <span><strong>QS Claim:</strong> $380,000 (58% complete)</span>
+        <span><strong>IPEX Paid:</strong> $375,000</span>
+        <span><strong>Variance:</strong> 1% ($5,000 under)</span>
+      </div>
+      <div class="ob-action"><strong>Recommended Action:</strong> Payment is aligned with certified progress – unless other information to the contrary, no action required.</div>
+    </div>
+
+    <!-- Concrete (GREEN) -->
+    <div class="ob-trade-detail">
+      <h4>Concrete <span class="ob-badge green">ALIGNED</span></h4>
+      <div class="ob-trade-grid">
+        <span><strong>QS Claim:</strong> $1,850,000 (95% complete)</span>
+        <span><strong>IPEX Paid:</strong> $1,840,000</span>
+        <span><strong>Variance:</strong> 1% ($10,000 under)</span>
+      </div>
+      <div class="ob-action"><strong>Recommended Action:</strong> Payment is aligned with certified progress – unless other information to the contrary, no action required.</div>
+    </div>
+
+    <!-- Structural Steel (YELLOW) -->
+    <div class="ob-trade-detail">
+      <h4>Structural Steel <span class="ob-badge yellow">REVIEW</span></h4>
+      <div class="ob-trade-grid">
+        <span><strong>QS Claim:</strong> $720,000 (72% complete)</span>
+        <span><strong>IPEX Paid:</strong> $600,000</span>
+        <span><strong>Variance:</strong> 17% ($120,000 under)</span>
+      </div>
+      <div class="ob-action"><strong>Recommended Action:</strong> Payment data does not support claimed progress. Consider verifying progress on site and/or requesting justification from the head contractor for payment shortfall against certified progress.</div>
+    </div>
+
+    <!-- Electrical (RED) -->
+    <div class="ob-trade-detail">
+      <h4>Electrical <span class="ob-badge red">ACTION REQUIRED</span></h4>
+      <div class="ob-trade-grid">
+        <span><strong>QS Claim:</strong> $450,000 (65% complete)</span>
+        <span><strong>IPEX Paid:</strong> $340,000</span>
+        <span><strong>Variance:</strong> 24% ($110,000 under)</span>
+      </div>
+      <div class="ob-action"><strong>Recommended Action:</strong> Payment data does not support claimed progress. Consider verifying progress on site and/or requesting justification from the head contractor for payment shortfall against certified progress.</div>
+    </div>
+
+    <!-- Flooring (RED) -->
+    <div class="ob-trade-detail">
+      <h4>Flooring — Carpet / Tiles <span class="ob-badge red">ACTION REQUIRED</span></h4>
+      <div class="ob-trade-grid">
+        <span><strong>QS Claim:</strong> $125,000 (25% complete)</span>
+        <span><strong>IPEX Paid:</strong> $0</span>
+        <span><strong>Variance:</strong> 100% ($125,000 under — no payments recorded)</span>
+      </div>
+      <div class="ob-action"><strong>Recommended Action:</strong> Payment data does not support claimed progress. Consider verifying progress on site and/or requesting justification from the head contractor for payment shortfall against certified progress.</div>
+    </div>
+
+    <div class="report-footer">
+      Report generated February 12, 2026 &nbsp;|&nbsp; ABC Developer &nbsp;|&nbsp; ABC Construction<br>
+      For support: verify@ipex.com.au &nbsp;|&nbsp; This report uses actual IPEX payment data
+    </div>
+  </div>
+</div>
+
+<!-- OVERLAY / MODALS -->
+<div class="overlay" id="overlay" onclick="event.target===this&&closeModal()">
+  <div class="modal" id="modal"></div>
+</div>
+
+<input type="file" id="fileInput" accept=".pdf,.doc,.docx,.xls,.xlsx" style="display:none">
+
+<script>
+const overlay=document.getElementById('overlay'),modal=document.getElementById('modal'),fileInput=document.getElementById('fileInput');
+let currentScreen='dashboard',selectedFile=null;
+
+function openModal(){overlay.classList.add('open')}
+function closeModal(){overlay.classList.remove('open');selectedFile=null}
+
+function hideAll(){
+  document.getElementById('dashboard').style.display='none';
+  document.getElementById('sidebar').style.display='none';
+  document.getElementById('report-select-page').style.display='none';
+  document.getElementById('standard-report-page').style.display='none';
+  document.getElementById('openbook-report-page').style.display='none';
+}
+
+function showDashboard(){
+  hideAll();
+  document.getElementById('dashboard').style.display='block';
+  document.getElementById('sidebar').style.display='flex';
+  closeModal();currentScreen='dashboard';
+}
+
+function showReportSelect(){
+  hideAll();
+  document.getElementById('report-select-page').style.display='block';
+  document.getElementById('sidebar').style.display='flex';
+  closeModal();currentScreen='report-select';
+  window.scrollTo(0,0);
+}
+
+function showStandardReport(){
+  hideAll();
+  document.getElementById('standard-report-page').style.display='block';
+  currentScreen='standard-report';
+  window.scrollTo(0,0);
+}
+
+function showOpenBookReport(){
+  hideAll();
+  document.getElementById('openbook-report-page').style.display='block';
+  currentScreen='openbook-report';
+  window.scrollTo(0,0);
+}
+
+function printReport(pageId){
+  // Hide all report pages, show only the target one for printing
+  var pages=document.querySelectorAll('.report-page');
+  pages.forEach(function(p){p.style.display='none'});
+  document.getElementById(pageId).style.display='block';
+  window.print();
+}
+
+/* SCREEN 2: Upload */
+function openUpload(){
+  selectedFile=null;
+  modal.innerHTML=`
+    <div class="modal-header"><div><div class="logo"><img src="ipex-logo-light.svg" alt="IPEX" style="height:28px"></div><div class="subtitle">QS VERIFICATION REPORT</div></div></div>
+    <div class="modal-body">
+      <div class="project-info"><strong>Project:</strong> IPEX Apartments &nbsp;&nbsp; <strong>Builder:</strong> Horizon Construction</div>
+      <p style="font-size:.9rem;color:#6b7280;margin-bottom:16px">Upload your QS report to validate against IPEX payment data for this project.</p>
+      <div class="dropzone" id="dropzone" onclick="fileInput.click()">
+        <div class="icon">📄</div>
+        <div class="main-text">Drop your QS Report here</div>
+        <div class="sub-text">or click to browse<br>Supported: PDF, Word, Excel</div>
+      </div>
+      <div class="secure-note">🔒 Your data is secure and confidential</div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal()">Cancel</button>
+      <button class="btn-primary" disabled id="uploadBtn">Upload & Verify</button>
+    </div>`;
+  openModal();
+  const dz=document.getElementById('dropzone');
+  dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('dragover')});
+  dz.addEventListener('dragleave',()=>dz.classList.remove('dragover'));
+  dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('dragover');if(e.dataTransfer.files.length)handleFile(e.dataTransfer.files[0])});
+}
+
+fileInput.addEventListener('change',e=>{if(e.target.files.length)handleFile(e.target.files[0]);fileInput.value=''});
+
+function handleFile(f){
+  const valid=['application/pdf','application/msword','application/vnd.openxmlformats-officedocument.wordprocessingml.document','application/vnd.ms-excel','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'];
+  if(!valid.includes(f.type)&&!f.name.match(/\.(pdf|docx?|xlsx?)$/i)){alert('Please upload a PDF, Word, or Excel file.');return}
+  if(f.size>10*1024*1024){alert('File must be under 10 MB.');return}
+  selectedFile=f;showFileSelected();
+}
+
+/* SCREEN 3: File Selected */
+function showFileSelected(){
+  const name=selectedFile?selectedFile.name:'QS_Report_January_2026.pdf';
+  const size=selectedFile?(selectedFile.size/1024/1024).toFixed(1):'2.4';
+  modal.innerHTML=`
+    <div class="modal-header"><div><div class="logo"><img src="ipex-logo-light.svg" alt="IPEX" style="height:28px"></div><div class="subtitle">QS VERIFICATION REPORT</div></div></div>
+    <div class="modal-body">
+      <div class="project-info"><strong>Project:</strong> IPEX Apartments &nbsp;&nbsp; <strong>Builder:</strong> Horizon Construction</div>
+      <div style="color:var(--status-green);font-weight:600;margin-bottom:8px">✅ File Selected</div>
+      <div class="file-card">
+        <div class="ficon">📄</div>
+        <div class="finfo"><div class="fname">${name}</div><div class="fsize">${size} MB</div></div>
+        <div class="fremove" onclick="openUpload()">✕</div>
+      </div>
+      <p style="font-size:.85rem;color:#6b7280;margin-top:8px">Ready to verify against IPEX payment data.</p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal()">Cancel</button>
+      <button class="btn-primary" onclick="showProcessing()">Upload & Verify</button>
+    </div>`;
+}
+
+/* SCREEN 4: Processing */
+function showProcessing(){
+  modal.innerHTML=`
+    <div class="modal-header"><div><div class="logo"><img src="ipex-logo-light.svg" alt="IPEX" style="height:28px"></div><div class="subtitle">QS VERIFICATION REPORT</div></div></div>
+    <div class="modal-body" style="text-align:center">
+      <h2 style="margin-bottom:4px;color:#1a1a2e">Analyzing QS Report...</h2>
+      <div class="shimmer-bar"><div id="pbar" style="width:0%"></div></div>
+      <div id="pct" style="font-size:.8rem;color:#6b7280;margin-bottom:16px">0%</div>
+      <div class="processing-steps" id="steps" style="text-align:left">
+        <div class="step pending" id="s1"><span class="check">○</span>Reading document<span class="time"></span></div>
+        <div class="step pending" id="s2"><span class="check">○</span>Extracting trade data<span class="time"></span></div>
+        <div class="step pending" id="s3"><span class="check">○</span>Matching with IPEX payment data<span class="time"></span></div>
+        <div class="step pending" id="s4"><span class="check">○</span>Calculating variances<span class="time"></span></div>
+      </div>
+      <div class="proc-note">💡 Analyzing 23 trades and payment records</div>
+    </div>`;
+  openModal();
+  const bar=document.getElementById('pbar'),pct=document.getElementById('pct');
+  const steps=[
+    {id:'s1',ms:800,t:'2.4s',pct:30},
+    {id:'s2',ms:1400,t:'1.8s',pct:55},
+    {id:'s3',ms:2000,t:'0.9s',pct:75},
+    {id:'s4',ms:2200,t:'',pct:87},
+  ];
+  steps.forEach(s=>{
+    setTimeout(()=>{
+      const el=document.getElementById(s.id);
+      if(s.id==='s4'){el.className='step active';el.querySelector('.check').textContent='⏳'}
+      else{el.className='step done';el.querySelector('.check').textContent='✓';el.querySelector('.time').textContent=s.t}
+      bar.style.width=s.pct+'%';pct.textContent=s.pct+'%';
+    },s.ms);
+  });
+  setTimeout(()=>{
+    document.getElementById('s4').className='step done';
+    document.getElementById('s4').querySelector('.check').textContent='✓';
+    document.getElementById('s4').querySelector('.time').textContent='1.2s';
+    bar.style.width='100%';pct.textContent='100%';
+    setTimeout(showResults,400);
+  },3400);
+}
+
+/* SCREEN 5: Results */
+function showResults(){
+  // Make sure dashboard/sidebar are visible for the modal overlay
+  hideAll();
+  document.getElementById('dashboard').style.display='';
+  document.getElementById('sidebar').style.display='';
+  modal.innerHTML=`
+    <div class="modal-header"><div><div class="logo"><img src="ipex-logo-light.svg" alt="IPEX" style="height:28px"></div><div class="subtitle">QS VERIFICATION REPORT</div></div></div>
+    <div class="modal-body">
+      <h2 style="margin-bottom:4px;color:#1a1a2e">Verification Complete</h2>
+      <div class="result-badge yellow">🟡 Review Recommended</div>
+      <p style="font-size:.85rem;color:#6b7280;margin-bottom:16px">Some payment variances detected when compared to certified progress.</p>
+      <div class="result-stat"><strong>Trades Analysed:</strong> 5</div>
+      <div class="result-items">
+        <div class="result-item">🟢 <span><strong>2 trades</strong> — Payment &amp; progress align</span></div>
+        <div class="result-item">🟡 <span><strong>1 trade</strong> — Review Recommended</span></div>
+        <div class="result-item">🔴 <span><strong>2 trades</strong> — Significant Discrepancies</span></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="openEmail()">Email to Builder</button>
+      <button class="btn-primary" onclick="showReportSelect()">View Full Report</button>
+    </div>`;
+  openModal();
+}
+
+/* SCREEN 7: Email */
+function openEmail(){
+  modal.innerHTML=`
+    <div class="modal-header"><div><div class="logo"><img src="ipex-logo-light.svg" alt="IPEX" style="height:28px"></div><div class="subtitle">EMAIL VERIFICATION REPORT</div></div></div>
+    <div class="modal-body">
+      <h3 style="margin-bottom:16px;color:#1a1a2e">Email QS Verification Report</h3>
+      <div class="form-group"><label>To</label><input type="email" value="builder@horizonconstruction.com.au" readonly></div>
+      <div class="form-group"><label>CC</label><input type="email" value="you@developer.com.au" readonly></div>
+      <div class="form-group"><label>Subject</label><input type="text" value="QS Report Verification - IPEX Apartments (Feb 15, 2026)"></div>
+      <div class="form-group"><label>Message</label><textarea rows="8">Dear Horizon Construction,
+
+Please find attached the QS Verification Report for IPEX Apartments.
+
+Our verification has identified payment variances across 3 of 5 trade categories that require your attention. Key items include:
+
+• Structural Steel — 17% variance (72% claimed completion)
+• Electrical — 34% variance (65% claimed completion)
+• Flooring — 100% variance (25% claimed completion, no payments recorded)
+
+We request clarification or supporting documentation for the above items at your earliest convenience.
+
+Kind regards,
+Jane Davidson
+ABC Developer</textarea></div>
+      <label class="checkbox-label"><input type="checkbox" checked> Attach verification report PDF</label>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal()">Cancel</button>
+      <button class="btn-primary" onclick="showSuccess()">Send</button>
+    </div>`;
+  openModal();
+}
+
+/* SCREEN 8: Success */
+function showSuccess(){
+  modal.innerHTML=`
+    <div class="modal-body">
+      <div class="success-content">
+        <div class="big-icon">✅</div>
+        <h2 style="color:#1a1a2e">Report Sent Successfully</h2>
+        <p>The QS verification report has been emailed to Horizon Construction. A copy has been saved to your project documents.</p>
+        <button class="btn-primary" onclick="showDashboard()">Close</button>
+      </div>
+    </div>`;
+  openModal();
+}
+
+/* Theme toggle */
+function toggleTheme(){
+  var html=document.documentElement;
+  var current=html.getAttribute('data-theme');
+  var next=current==='light'?'dark':'light';
+  html.setAttribute('data-theme',next);
+  localStorage.setItem('ipex-theme',next);
+  updateToggleIcon(next);
+}
+function updateToggleIcon(theme){
+  var icon=document.querySelector('.theme-toggle .toggle-icon');
+  if(icon) icon.textContent=theme==='light'?'◑':'☀';
+}
+(function(){
+  var saved=localStorage.getItem('ipex-theme');
+  if(saved){document.documentElement.setAttribute('data-theme',saved);updateToggleIcon(saved)}
+})();
+
+/* Demo shortcut */
+document.addEventListener('keydown',e=>{
+  if(e.key==='d'&&e.ctrlKey){e.preventDefault();selectedFile={name:'QS_Report_January_2026.pdf',size:2.4*1024*1024,type:'application/pdf'};showFileSelected();openModal()}
+});
+document.addEventListener('click',e=>{
+  if(e.target.closest('.dropzone')&&!selectedFile){
+    setTimeout(()=>{
+      if(!selectedFile){selectedFile={name:'QS_Report_January_2026.pdf',size:2.4*1024*1024,type:'application/pdf'};showFileSelected()}
+    },300);
+  }
+});
+</script>
+</body>
+</html>
